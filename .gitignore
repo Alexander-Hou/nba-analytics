@@ -1,0 +1,95 @@
+# ==========================================
+# 1. 虚拟环境与依赖 (本地运行环境，绝不提交)
+# ==========================================
+.venv/
+venv/
+ENV/
+env/
+/env/
+/venv/
+ENV/env/
+
+# ==========================================
+# 2. Python 运行与编译缓存
+# ==========================================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# ==========================================
+# 3. Jupyter Notebook 临时与草稿文件
+# ==========================================
+.ipynb_checkpoints/
+*-checkpoint.ipynb
+
+# ==========================================
+# 4. 项目数据集与模型大文件 (数据与代码解耦)
+# ==========================================
+# 忽略所有 raw 和 processed 下的 csv 数据文件
+data/raw/*.csv
+data/processed/*.csv
+
+# 忽略保存的模型权重文件
+saved_models/*.pkl
+saved_models/*.joblib
+saved_models/*.onnx
+
+# 保留 .gitkeep 文件，确保 Git 能追踪到空的文件夹结构
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+!saved_models/.gitkeep
+
+# ==========================================
+# 5. IDE 与编辑器配置文件
+# ==========================================
+# VS Code
+.vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.code-workspace
+
+# PyCharm / IntelliJ IDEA
+.idea/
+*.iws
+*.iml
+*.ipr
+
+# macOS 操作系统生成文件
+.DS_Store
+.AppleDouble
+.lsbundle
+.LSOverride
+
+# Windows 操作系统生成文件
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# ==========================================
+# 6. 日志与临时调试文件
+# ==========================================
+*.log
+*.tmp
+*.temp
+.pytest_cache/
+.coverage
+htmlcov/
