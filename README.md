@@ -38,7 +38,7 @@
     *   设定预测目标（如：基于历史数据预测球员下赛季 PER 效率值，或预测是否入选全明星 All-Star）。
     *   使用 Random Forest、XGBoost、LightGBM 等算法进行训练、交叉验证与超参数调优。
     *   引入 SHAP (SHapley Additive exPlanations) 值评估特征重要性，解释单一球员的能力归因。
-*   **关键交付**：`notebooks/03_prediction.ipynb`（建模过程）与 `saved_models/*.pkl`（导出的模型权重）。
+*   **关键交付**：`notebooks/03_prediction.ipynb`（建模过程）与 `models/*.pkl`（导出的模型权重）。
 
 #### 5. Web 前端看板开发与项目整合
 *   **核心职责**：搭建交互式 Web 动态看板，整合全队数据、图表与模型，负责最终成果的呈现与项目汇总。
