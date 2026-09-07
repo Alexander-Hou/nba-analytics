@@ -14,6 +14,7 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 from src import visualization as viz  # noqa: E402
+from src import formula_model  # noqa: E402
 
 
 MASTER_PATH = PROJECT_ROOT / "data" / "processed" / "master_data.csv"
@@ -176,15 +177,14 @@ def render_clustering() -> None:
 
 def render_prediction() -> None:
     st.header("预测模型")
-    per_model = MODEL_DIR / "nba_per_xgb_pipeline.pkl"
-    allstar_model = MODEL_DIR / "nba_allstar_xgb_pipeline.pkl"
-    if not (per_model.exists() and allstar_model.exists()):
-        st.info("当前仓库尚未提供已训练模型文件。运行 `notebooks/03_prediction.ipynb` 的模型导出单元后，本页即可接入预测服务。")
-        return
-
-    from src.models import get_predictor
-
-    st.caption("输入当季基础统计，模型输出下赛季 PER 预测与全明星级概率。")
+    st.caption("输入当季基础统计，前端直接套用 notebook Baseline 公式计算下赛季 PER 与全明星级概率，无需后端服务。")
+    with st.expander("模型口径与公式", expanded=False):
+        st.write(formula_model.formula_text())
+        st.markdown(
+            "- 回归：`LinearRegression`，严格按 `Year ≤ 2010 / Year > 2010` 时序验证，测试集 **R²=0.3441，RMSE=4.7785**。\n"
+            "- 分类：`LogisticRegression(class_weight='balanced')`，测试集 **ROC-AUC=0.9539，F1=0.5732**。\n"
+            "- 位置字段按 notebook 的 `Pos` 独热编码处理；未填写项使用 0。"
+        )
     with st.form("prediction_form"):
         cols = st.columns(3)
         values = {
@@ -204,14 +204,14 @@ def render_prediction() -> None:
         submitted = st.form_submit_button("运行预测")
     if submitted:
         try:
-            predictor = get_predictor(per_model, allstar_model)
-            per = predictor.predict_per(values)
-            probability, label = predictor.predict_allstar_proba(values)
+            per = formula_model.predict_per(values)
+            probability, label = formula_model.predict_allstar_proba(values)
             left, right = st.columns(2)
             left.metric("预测下赛季 PER", f"{per:.2f}")
             right.metric("全明星级概率", f"{probability:.1%}", "核心级" if label else "非核心级")
-        except Exception as exc:  # 模型文件版本不兼容时保留界面可用性。
-            st.error(f"模型推理失败：{exc}")
+            st.caption("提示：该概率对应 notebook 中“下一季 PER ≥ 20 且 WS ≥ 6”的全明星级定义。")
+        except (TypeError, ValueError, OverflowError) as exc:
+            st.error(f"输入数据无法计算：{exc}")
 
 
 def main() -> None:
