@@ -1,127 +1,118 @@
-# NBA 球员数据分析与机器学习项目 (nba-analytics)
+# NBA球员信息统计与可视化 (NBA Players Analytics & Visualization System)
 
-本研究项目旨在对 NBA 历史与现役球员数据进行深度清洗、描述性统计分析、聚类挖掘及机器学习预测，并最终通过交互式 Web 看板（Streamlit）进行综合可视化呈现。
+本项目以 Kaggle NBA 历史球员数据（1950–2017赛季）为研究对象，构建了一条从**数据清洗与特征工程**、**探索性数据分析 (EDA)**、**分时代无监督聚类**、**下一赛季表现预测**到 Streamlit 交互式数据看板的完整数据分析与展示链路。
 
----
+## 📌 项目核心亮点
 
-## 团队分工
+1. **统一数据口径与多源匹配**：整合球员基本信息与赛季高级指标，处理了交易赛季（TOT汇总）及早期缺失指标，构建了 20,000+ 条高质 master 数据。
+2. **分时代球员角色聚类**：突破传统五大位置分类，基于 1980s、1990s、2000s、2010s 四个时代进行无监督聚类，并通过 PCA/t-SNE 降维与雷达图刻画球员功能演化。
+3. **无后端零依赖前端直算预测**：采用严格的年份切分（Year≤2010 训练，Year>2010 测试）防止未来信息泄漏。将训练好的回归与分类模型标准化系数还原为原始特征空间公式（写于 `src/formula_model.py` 中），前端直接代入公式计算，无需加载 `.pkl` 文件或后端模型服务。
+4. **模块化与性能优化**：使用 `st.cache_data` 实现数据与图表缓存，页面交互流畅；项目分层清晰，便于扩展与并行开发。
 
-本项目采用按功能模块与技术栈拆分的协作架构，5 位成员各司其职，通过标准的上下游数据与代码流紧密配合：
+## 🛠️ 环境准备与依赖安装
 
-#### 1. 数据清洗
-*   **核心职责**：负责多源数据的标准化清洗、跨表主键对齐、重名处理与主数据集（Master Dataset）构建。
-*   **具体任务**：
-    *   加载并校验 `Player.csv`、`Seasons_Stats.csv` 和 `player_data.csv` 原始数据。
-    *   处理缺失值、异常极值、同名不同人及历史时代数据归一化。
-    *   按照 `Player` + `Year` 等维度打通跨表关联，构建并派生真实命中率（TS%）、每36分钟折算等核心特征。
-*   **关键交付**：`src/data_cleaning.py`（清洗脚本）与 `data/processed/master_data.csv`（统一标准数据集）。
+### 1. 运行环境要求
 
-#### 2. 描述性统计与 EDA 可视化分析 
-*   **核心职责**：基于主数据集开展描述性统计计算，挖掘数据分布特征，产出多维度高质感静态/动态图表。
-*   **具体任务**：
-    *   计算各统计指标的均值、中位数、标准差及分位数，绘制描述性统计汇总表。
-    *   探索得分分布、出场时间与效率值（PER）的 Pearson 相关性热力图。
-    *   按场上位置（Pos）、薪资梯队或选秀时代进行对比分析（箱线图、小提琴图）。
-*   **关键交付**：`notebooks/01_eda.ipynb`（分析过程）与 `src/visualization.py`（复用绘图函数）。
+- **Python 版本**：`Python 3.12`
+- **推荐 IDE**：VS Code 或 PyCharm
 
-#### 3. 无监督学习与聚类挖掘
-*   **核心职责**：打破传统 5 个标称位置的局限，运用降维与聚类算法挖掘现代化“无位置篮球”下球员的隐性战术定位。
-*   **具体任务**：
-    *   使用 PCA / t-SNE 对高维统计特征（如 3PAr, FTr, AST%, BLK% 等）进行降维与二维空间展示。
-    *   构建 K-Means / 层次聚类模型，利用肘部法则（Elbow Method）与轮廓系数（Silhouette Score）确定最佳 K 值。
-    *   对聚类结果进行战术语义画像（如定义“3D外线精英”、“组织型中锋”、“高使用率单打手”等）。
-*   **关键交付**：`notebooks/02_clustering.ipynb`（聚类探索）与各簇球员特征对比雷达图。
+### 2. 安装依赖库
 
-#### 4. 监督学习与预测建模
-*   **核心职责**：构建回归与分类机器学习模型，对球员的能力评估、未来技术表现或荣誉预测进行建模与解释。
-*   **具体任务**：
-    *   设定预测目标（如：基于历史数据预测球员下赛季 PER 效率值，或预测是否入选全明星 All-Star）。
-    *   使用 Random Forest、XGBoost、LightGBM 等算法进行训练、交叉验证与超参数调优。
-    *   引入 SHAP (SHapley Additive exPlanations) 值评估特征重要性，解释单一球员的能力归因。
-*   **关键交付**：`notebooks/03_prediction.ipynb`（建模过程）与 `saved_models/*.pkl`（导出的模型权重）。
+在项目根目录下打开终端，运行以下命令安装所需 Python 第三方库：
 
-#### 5. Web 前端看板开发与项目整合
-*   **核心职责**：搭建交互式 Web 动态看板，整合全队数据、图表与模型，负责最终成果的呈现与项目汇总。
-*   **具体任务**：
-    *   基于 Streamlit 框架搭建前端大屏，提供球员/赛季/球队的动态筛选功能。
-    *   嵌合角色 B 的 EDA 图表、角色 C 的聚类雷达图与角色 D 的模型预测接口（实时输入参数输出评估）。
-    *   统一规范全队代码仓库，汇总撰写最终项目报告（Report）与演示 PPT。
-*   **关键交付**：`app/app.py`（交互大屏主程序）、最终项目总结报告与汇报 PPT。
+```
+pip install pandas numpy scikit-learn xgboost matplotlib seaborn plotly streamlit openpyxl python-docx
+```
 
+## 🚀 快速启动与使用说明
 
+### 1. 启动交互式 Streamlit 看板
 
-## 项目目录
+在项目根目录下运行以下命令启动 Web 应用程序：
 
-```text
+```
+python -m streamlit run app/app.py
+```
+
+启动成功后，浏览器会自动打开看板页面（默认地址为 `http://localhost:8501`）。
+
+### 2. 看板六大功能模块使用指南
+
+网页左侧设有**全局筛选侧边栏**（支持按赛季范围、主位置、球队以及最低出场时间 `MP` 进行数据过滤，默认过滤 MP≥500 分钟以降低小样本波动），上方可切换以下 6 个核心页面：
+
+#### 📊 1. 项目概览 (Overview)
+
+- **核心功能**：展示当前筛选条件下的关键统计指标指标卡（总记录数、覆盖球员数、赛季跨度、场均得分中位数、PER中位数）。
+- **使用方式**：查看各赛季球员表现中位数变化趋势图及位置占比分布。
+
+#### 🔍 2. 球员与赛季探索 (Player & Season Exploration)
+
+- **核心功能**：支持最多选择 5 名球员进行横向与纵向表现对比；未选择球员时按效率指标 PER 降序展示 Top 50 球员。
+- **使用方式**：在下拉框中搜索/多选球员姓名，下方将自动绘制 PER 赛季生涯趋势折线图，并同步输出详细的赛季统计明细数据表。
+
+#### 📈 3. 效率与分布 (Efficiency & Distribution)
+
+- **核心功能**：分析核心数据（如得分、PER、真实命中率 TS%、每36分钟得分 PTS_per36 等）的总体分布、位置箱线图及特征间相关性热力图。
+- **使用方式**：观察不同位置球员的效率分散程度与指标相关关系。
+
+#### 🏆 4. 球队与位置对比 (Team & Position Comparison)
+
+- **核心功能**：在“球队维度”与“位置维度”间自由切换，对比各项指标的中位数排名。
+- **使用方式**：通过单选框选择分组维度（球队/位置）与比较指标，自动过滤样本数小于 10 的分组，展示稳定的排名柱状图。
+
+#### 🧬 5. 聚类挖掘成果 (Clustering Results)
+
+- **核心功能**：直观展示分时代（1980s / 1990s / 2000s / 2010s）球员功能角色聚类分析成果。
+- **使用方式**：选择目标时代，查看对应的 PCA 2D 降维空间分布图与聚类类型特征雷达图，探索不同时代篮球风格的变迁。
+
+#### 🔮 6. 预测模型与在线评估 (Performance Prediction)
+
+- **核心功能**：输入球员当季基础数据与高级指标，即时预测其**下一赛季 PER 效率值**及**是否达到全明星级别（PER≥20 且 WS≥6）的概率**。
+- **使用方式**：
+  1. 在表单中调整/输入球员当季数据（如年龄、场次、出场时间、TS%、三项占比、PER相关指标等）。
+  2. 点击 **“开始预测”** 按钮。
+  3. 页面将卡片化输出下一赛季 PER 预测值及全明星级别概率，并附带模型评估指标（R²、RMSE、ROC-AUC）与公式说明。
+
+## 📁 系统架构与目录结构
+
+系统采用“数据层—分析层—模型层—展示层”四层架构：
+
+```
 nba-analytics/
-├── .gitignore              # Git 忽略文件（已配置屏蔽大数据集与环境缓存）
-├── README.md               # 本说明文档
-├── requirements.txt        # 项目 Python 依赖包列表
+├── app/
+│   └── app.py               # Streamlit 展示层应用主入口
 ├── data/
-│   ├── raw/                # [本地] 原始数据集 (.csv)，不提交至 Git
-│   └── processed/          # [本地] 清洗与 Merge 后的 Master 数据集
-├── notebooks/              # 用于探索与分析的 Jupyter Notebooks
-│   ├── 01_eda.ipynb
-│   ├── 02_clustering.ipynb
-│   └── 03_prediction.ipynb
-├── src/                    # 项目核心可复用 Python 源码
-│   ├── __init__.py
-│   ├── data_cleaning.py    # 数据清洗与合并逻辑
-│   ├── visualization.py    # 绘图函数封装
-│   ├── models.py           # 算法模型封装
-│   └── utils.py            # 通用工具小函数
-├── saved_models/           # 保存训练好的模型权重 (如 .pkl)
-└── app/                    # 交互大屏程序
-    └── app.py              # Streamlit 主入口
+│   ├── raw/                 # 原始数据 (Seasons_Stats.csv, Players.csv, player_data.csv)
+│   └── processed/           # 清洗合并后的主数据集 (master_data.csv)
+├── figures/                 # 离线生成的聚类图表、PCA图与雷达图
+├── notebooks/               # 离线数据分析与算法实验 Notebooks
+│   ├── 01_eda.ipynb         # 探索性数据分析 (EDA)
+│   ├── 02_clustering.ipynb  # 分时代无监督聚类 (K-Means / PCA / t-SNE)
+│   └── 03_prediction.ipynb  # 下一赛季表现回归与分类模型训练与评估
+├── output/                  # 模型评估结果与过程数据输出
+├── src/                     # 核心 Python 模块
+│   ├── data_cleaning.py     # 数据清洗、字段标准化与 TOT 交易赛季处理
+│   ├── formula_model.py     # 还原原始特征空间的直接计算公式
+│   └── visualization.py     # 可复用的绘图函数集
+├── 期末报告.docx            # 项目完整期末报告文档
+└── README.md                # 项目说明文档
 ```
 
+## 📊 数据说明与预处理流程
 
+- **原始数据**：来自于 Kaggle NBA Players Stats 数据集，包含 1950–2017 年间的 24,000+ 条球员赛季记录。
+- **主要预处理步骤**：
+  1. 统一身高、体重单位，标准化出生日期与位置字段。
+  2. 针对单赛季多队效力（TOT 记录）进行去重与汇总清洗。
+  3. 派生衍生特征：真实命中率 (`TS%`)、三分尝试率 (`3PAr`)、罚球尝试率 (`FTr`)、每36分钟统计指标 (`PTS_per36`等) 以及时代标签 (`era`)。
+  4. 输出清洗后的主数据集 `data/processed/master_data.csv`（20,313条记录，78列）。
 
-## 快速开始与环境搭建 
+## 👥 团队成员与分工
 
-### 1. 克隆仓库 
-```bash
-git clone https://github.com/Alexander-Hou/nba-analytics.git
-cd nba-analytics
-```
-
-### 2. 配置 Python 虚拟环境
-建议使用 `Python 3.10+` 环境：
-```bash
-# 创建虚拟环境
-python -m venv .venv
-
-# 激活虚拟环境 (Linux/macOS)
-source .venv/bin/activate
-
-# 激活虚拟环境 (Windows Cmd)
-.venv\Scripts\activate.bat
-```
-
-### 3. 安装项目依赖
-```bash
-pip install -r requirements.txt
-```
-
-### 4. 获取数据集 
-由于原始 `.csv` 数据集体积较大，不直接存储于 Git 仓库中。
-1. 请在本地找到以下 3 个原始文件：
-   - `Players.csv`
-   - `Seasons_Stats.csv`
-   - `player_data.csv`
-2. 下载后请手动移动至本地项目的 `data/raw/` 目录下。
-
-
-
-## Git 协作与分支规范
-
-1. **主分支限制**：禁止直接在 `main` 分支上提交代码
-2. **分支开发**：每个人在各自的功能分支上独立开发：
-   - 角色 A: `git checkout -b feat/data-cleaning`
-   - 角色 B: `git checkout -b feat/eda-vis`
-   - 角色 C: `git checkout -b feat/clustering`
-   - 角色 D: `git checkout -b feat/ml-prediction`
-   - 角色 E: `git checkout -b feat/dashboard`
-3. **提交与合并**：
-   - 提交前请清空 Notebook 输出：`Kernel -> Restart & Clear Output`。
-   - 开发完成后推送到远程，并发起 Pull Request (PR) 申请合并至 `main`。
+| **姓名**   | **学号** | **负责模块**  | **主要交付物**                                               |
+| ---------- | -------- | ------------- | ------------------------------------------------------------ |
+| **彭浩然** | 25050318 | 数据工程      | 多源数据清洗、字段匹配、主数据集生成 (`data_cleaning.py`)    |
+| **毛俊杰** | 25050328 | EDA与可视化   | 描述统计、趋势分析、通用绘图函数库 (`visualization.py`, `01_eda.ipynb`) |
+| **王延**   | 25050313 | 聚类挖掘      | 分时代 K-Means 聚类、PCA/t-SNE 降维与球员画像雷达图 (`02_clustering.ipynb`) |
+| **侯锦程** | 25270230 | 预测建模      | 下一季 PER 回归、全明星分类建模与算法评估 (`03_prediction.ipynb`) |
+| **叶佳乐** | 25050313 | Web前端与整合 | Streamlit 看板构建、前端直算公式实现与系统文档 (`app/app.py`, `formula_model.py`) |
